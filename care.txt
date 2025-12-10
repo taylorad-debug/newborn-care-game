@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newborn Care Trainer: Trust vs. Mistrust</title>
+    <!-- Use 16-bit style fonts -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+        
+        :root {
+            --bg-color: #2c2f33; /* Dark background */
+            --main-color: #f7f7f7; /* Light text */
+            --frame-color: #00b0ff; /* Bright blue 16-bit frame */
+            --accent-color: #ff5722; /* Orange action color */
+            --baby-bg: #8c8c8c; /* Grey-green baby monitor background */
+            --cry-color: #e53935; /* Red cry color */
+            --happy-color: #64dd17; /* Bright green success color */
+            --shadow-color: #1a1c1e;
+            --taylor-color: #ff69b4; /* Pink for Ms. Taylor */
+        }
+
+        body {
+            font-family: 'VT323', monospace;
+            background-color: var(--bg-color);
+            color: var(--main-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+            font-size: 1.2rem;
+            line-height: 1.4;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 640px;
+            border: 6px solid var(--frame-color);
+            border-radius: 8px;
+            box-shadow: 0 8px 0 var(--shadow-color), 0 0 20px rgba(0, 176, 255, 0.5);
+            padding: 20px;
+            text-align: center;
+            background-color: var(--shadow-color);
+        }
+
+        h1 {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--frame-color);
+            text-shadow: 2px 2px var(--shadow-color);
+        }
+
+        .info-panel {
+            background-color: #455a64;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 2px solid var(--frame-color);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        /* --- Baby Display (Monitor Style) --- */
+        #baby-display {
+            width: 100%;
+            height: 180px;
+            background-color: var(--baby-bg);
+            border: 4px inset #607d8b;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        #baby-status {
+            font-size: 1.2rem;
+            color: var(--main-color);
+            margin-bottom: 10px;
+            transition: color 0.3s;
+        }
+
+        #baby-face {
+            font-size: 4rem; /* Larger emoji for 16-bit focus */
+            transition: transform 0.1s;
+        }
+        
+        /* Crying animation/style */
+        .crying {
+            color: var(--cry-color);
+            animation: pulse-cry 0.5s infinite alternate;
+        }
+
+        @keyframes pulse-cry {
+            from { transform: scale(1.0); opacity: 1; }
+            to { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        /* --- Meter --- */
+        #meter-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 1rem;
+            padding: 8px;
+            background-color: #263238;
+            border: 2px solid #546e7a;
+            border-radius: 4px;
+        }
+        
+        .meter-bar {
+            flex-grow: 1;
+            height: 18px;
+            margin: 0 10px;
+            border: 2px solid var(--main-color);
+            border-radius: 9px;
+            background: linear-gradient(to right, #444, #666);
+            overflow: hidden;
+        }
+
+        #trust-level {
+            height: 100%;
+            background-color: var(--happy-color);
+            transition: width 0.5s cubic-bezier(0.25, 0.8, 0.5, 1); /* Smoother transition */
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* --- Buttons (Beveled 16-bit style) --- */
+        #action-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .action-button {
+            font-family: 'Press Start 2P', cursive;
+            padding: 12px 8px;
+            background-color: #607d8b;
+            color: var(--main-color);
+            border: none;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: background-color 0.1s, transform 0.1s, box-shadow 0.1s;
+            
+            /* 16-bit bevel effect */
+            border-top: 4px solid #90a4ae;
+            border-left: 4px solid #90a4ae;
+            border-bottom: 4px solid #455a64;
+            border-right: 4px solid #455a64;
+            border-radius: 4px;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .action-button:hover {
+            background-color: #78909c;
+        }
+
+        .action-button:active {
+            /* 'Press' effect */
+            transform: translateY(2px);
+            border-top: 4px solid #455a64;
+            border-left: 4px solid #455a64;
+            border-bottom: 4px solid #90a4ae;
+            border-right: 4px solid #90a4ae;
+        }
+
+        /* Message Box / Game Over / Ms. Taylor dialogue */
+        #message-box {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #message-content {
+            background-color: #263238;
+            border: 6px solid var(--accent-color);
+            padding: 30px;
+            box-shadow: 0 0 20px var(--accent-color), 0 4px 0 var(--shadow-color);
+            max-width: 90%;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 1.1rem;
+        }
+
+        .taylor-intro {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            text-align: left;
+            border: 2px dashed var(--taylor-color);
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        .taylor-face {
+            font-size: 2.5rem;
+            margin-right: 15px;
+            line-height: 1;
+        }
+
+        .taylor-dialogue {
+            flex-grow: 1;
+        }
+
+        .taylor-dialogue strong {
+            color: var(--taylor-color);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.9rem;
+        }
+        
+        #message-content button {
+            margin-top: 25px;
+        }
+
+    </style>
+    <!-- Tone.js for complex 16-bit Audio generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+
+<div id="game-container">
+    <h1>Newborn Care Trainer</h1>
+    <div class="info-panel">
+        **TRUST vs MISTRUST**<br>Maintain the Trust Meter by responding to the baby's needs (cries) within the time limit! Score is based on consistency.
+    </div>
+
+    <div id="meter-container">
+        TRUST LEVEL:
+        <div class="meter-bar">
+            <div id="trust-level" style="width: 50%;"></div>
+        </div>
+    </div>
+
+    <div id="baby-display">
+        <div id="baby-status">Awaiting Input...</div>
+        <div id="baby-face">👶</div>
+    </div>
+
+    <div id="action-buttons">
+        <button id="action-feed" class="action-button" data-action="Feed" title="Responds to Hunger/Sucking Reflex">🍼 FEED (Sucking)</button>
+        <button id="action-diaper" class="action-button" data-action="Diaper" title="Responds to Discomfort/Touch Reflex">🧼 DIAPER (Touch)</button>
+        <button id="action-soothe" class="action-button" data-action="Soothe" title="Responds to Tension/Motor Reflex">🧸 SOOTHE (Movement)</button>
+    </div>
+</div>
+
+<div id="message-box">
+    <div id="message-content">
+        <!-- Ms. Taylor dialogue will be inserted here -->
+        <div id="taylor-dialogue-container"></div>
+        <div id="message-text"></div>
+        <button id="restart-button" class="action-button">START / RESTART GAME</button>
+    </div>
+</div>
+
+<script>
+    // Global Constants based on the provided text
+    const MAX_TRUST = 100;
+    const MIN_TRUST = 0;
+    const NEED_TIME = 6000; // Time window to respond (6 seconds)
+    const NEED_CYCLE_MIN = 3000; // Minimum time between needs
+    const NEED_CYCLE_MAX = 7000; // Maximum time between needs
+    const TRUST_INCREASE = 15; // Reward for correct action (Consistency builds Trust)
+    const TRUST_DECREASE_WRONG = 10; // Penalty for wrong action (Mistrust begins)
+    const TRUST_DECREASE_TIMEOUT = 20; // Harsher penalty for timeout (Inconsistent care)
+    const MAX_SCORE_TARGET = 150; // Win condition based on total score
+
+    // Game State Variables
+    let currentTrust = 50;
+    let currentNeed = null;
+    let gameInterval;
+    let needTimeout;
+    let isGameRunning = false;
+    let score = 0;
+
+    // UI Elements
+    const trustLevelEl = document.getElementById('trust-level');
+    const babyStatusEl = document.getElementById('baby-status');
+    const babyFaceEl = document.getElementById('baby-face');
+    const messageBoxEl = document.getElementById('message-box');
+    const messageTextEl = document.getElementById('message-text');
+    const actionButtons = document.getElementById('action-buttons');
+    const restartButtonEl = document.getElementById('restart-button');
+    const taylorDialogueContainer = document.getElementById('taylor-dialogue-container');
+
+    // Ms. Taylor's Appearance and Name
+    const MS_TAYLOR_EMOJI = "👩‍🏫"; // Teacher emoji
+    const MS_TAYLOR_NAME = "MS. TAYLOR";
+    const MS_TAYLOR_COLOR = 'var(--taylor-color)';
+
+
+    // --- Tone.js Setup (16-bit Sound FX) ---
+    let crySynth, happySynth;
+
+    // Helper to start audio context on user interaction
+    function startAudioContext() {
+        if (Tone.context.state !== 'running') {
+            Tone.context.resume();
+        }
+    }
+    
+    // Initializing the audio elements with 16-bit style Synths
+    function initAudio() {
+        // Baby Cry Sound (FMSynth for complex, high-pitched 16-bit cry)
+        crySynth = new Tone.FMSynth({
+            harmonicity: 3.5,
+            modulationIndex: 12,
+            envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.3 },
+            volume: -10
+        }).toDestination();
+
+        // Happy/Success Sound (AMSynth for a clean, arcade jingle)
+        happySynth = new Tone.AMSynth({
+            harmonicity: 2,
+            oscillator: { type: "square" },
+            envelope: { attack: 0.01, decay: 0.1, sustain: 0.0, release: 0.2 },
+            volume: -8
+        }).toDestination();
+    }
+
+    // Play the cry sound
+    function playCry() {
+        crySynth.triggerAttackRelease(["C5", "D#5"], "0.4");
+    }
+
+    // Play the success sound
+    function playHappy() {
+        happySynth.triggerAttackRelease(["E5", "G5", "C6"], "8n");
+    }
+
+    // --- Ms. Taylor Dialogue Helper ---
+    function setTaylorDialogue(text) {
+        taylorDialogueContainer.innerHTML = `
+            <div class="taylor-intro">
+                <div class="taylor-face">${MS_TAYLOR_EMOJI}</div>
+                <div class="taylor-dialogue">
+                    <strong>${MS_TAYLOR_NAME}:</strong> ${text}
+                </div>
+            </div>
+        `;
+    }
+
+
+    // --- Game Logic ---
+
+    // Object defining the needs and the correct actions based on Sucking, Touch, and Motor Reflexes
+    const needs = {
+        Hunger: { 
+            action: 'Feed', 
+            reflex: 'Sucking', 
+            message: "Refining SUCKING Reflex: Time to eat!", 
+            emoji: "😩" 
+        },
+        Discomfort: { 
+            action: 'Diaper', 
+            reflex: 'Touch', 
+            message: "Responding to TOUCH: I need a clean diaper!", 
+            emoji: "😭" 
+        },
+        Tension: { 
+            action: 'Soothe', 
+            reflex: 'Motor/Movement', 
+            message: "Relieving TENSION: Hold and Soothe me!", 
+            emoji: "😫" 
+        }
+    };
+
+    // Update the Trust Meter UI
+    function updateTrustUI() {
+        currentTrust = Math.max(MIN_TRUST, Math.min(MAX_TRUST, currentTrust));
+        trustLevelEl.style.width = currentTrust + '%';
+        
+        // Change meter color based on trust level
+        if (currentTrust < 30) {
+            trustLevelEl.style.backgroundColor = '#e53935'; // Red (Mistrust)
+        } else if (currentTrust < 70) {
+            trustLevelEl.style.backgroundColor = '#ffc107'; // Yellow/Orange
+        } else {
+            trustLevelEl.style.backgroundColor = '#64dd17'; // Green (Trust)
+        }
+
+        // Check for Game Over/Win Condition
+        if (currentTrust <= MIN_TRUST) {
+            endGame(false, "Trust Meter hit zero.");
+        } else if (score >= MAX_SCORE_TARGET) {
+            endGame(true, "Target Score Reached!");
+        }
+    }
+
+    // Trigger a new need
+    function triggerNeed() {
+        const needKeys = Object.keys(needs);
+        const newNeedKey = needKeys[Math.floor(Math.random() * needKeys.length)];
+        currentNeed = needs[newNeedKey];
+
+        babyStatusEl.textContent = `CRYING: ${currentNeed.reflex} Active!`;
+        babyStatusEl.style.color = 'var(--cry-color)';
+        babyFaceEl.textContent = currentNeed.emoji;
+        babyFaceEl.classList.add('crying');
+        playCry();
+
+        // Set a timeout for responding
+        needTimeout = setTimeout(() => {
+            if (isGameRunning && currentNeed) {
+                // Timeout: Player was too slow (Inconsistent care leads to Mistrust)
+                currentTrust -= TRUST_DECREASE_TIMEOUT;
+                score = Math.max(0, score - 15);
+                babyStatusEl.textContent = "INCONSISTENT CARE! Mistrust begins.";
+                updateTrustUI();
+                resetNeed();
+            }
+        }, NEED_TIME);
+    }
+
+    // Reset the current need state
+    function resetNeed() {
+        clearTimeout(needTimeout);
+        currentNeed = null;
+        babyFaceEl.classList.remove('crying');
+        babyFaceEl.textContent = "😊";
+        babyStatusEl.textContent = "Content: Trust is built. Score: " + score;
+        babyStatusEl.style.color = 'var(--main-color)';
+    }
+
+    // Schedule the next need trigger
+    function scheduleNextNeed() {
+        if (!isGameRunning) return;
+        
+        const delay = Math.random() * (NEED_CYCLE_MAX - NEED_CYCLE_MIN) + NEED_CYCLE_MIN;
+        gameInterval = setTimeout(() => {
+            if (isGameRunning && !currentNeed) {
+                triggerNeed();
+            }
+            scheduleNextNeed(); // Keep the cycle going
+        }, delay);
+    }
+
+    // Handle button click action
+    function handleAction(event) {
+        startAudioContext();
+        if (!isGameRunning || !currentNeed) {
+            babyStatusEl.textContent = "Baby is content! No action required.";
+            return;
+        }
+
+        const action = event.target.dataset.action;
+        
+        if (action === currentNeed.action) {
+            // Correct response: Build Trust and Refine Reflex
+            playHappy();
+            currentTrust += TRUST_INCREASE;
+            score += 25;
+            babyStatusEl.textContent = `SUCCESS! ${currentNeed.reflex} Refined. Trust Built!`;
+            updateTrustUI();
+            resetNeed();
+        } else {
+            // Incorrect response: Build Mistrust
+            currentTrust -= TRUST_DECREASE_WRONG;
+            score = Math.max(0, score - 10);
+            babyStatusEl.textContent = `INCORRECT! This was not a ${currentNeed.reflex} need.`;
+            updateTrustUI();
+        }
+    }
+
+    // Game Over Function
+    function endGame(won, reason) {
+        isGameRunning = false;
+        clearTimeout(needTimeout);
+        clearTimeout(gameInterval);
+        
+        let message = "";
+        let taylorComment = "";
+
+        if (won) {
+            message = `<span style="color:var(--happy-color);">**VICTORY: TRUST ACHIEVED!**</span><br><br>Final Score: ${score}<br>`;
+            taylorComment = `Excellent work! You provided consistent and prompt care, which is the foundation for establishing **TRUST** (Erikson's Stage 1). You successfully interpreted the baby's only language—crying—and refined those crucial reflexes!`;
+        } else {
+            message = `<span style="color:var(--cry-color);">**GAME OVER: MISTRUST**</span><br><br>Final Score: ${score}<br>`;
+            taylorComment = `Don't worry, new parenthood is tough! The Trust Meter hit zero because responses were either too slow or incorrect. Remember: responding promptly and consistently is key to teaching the baby they can **TRUST** their world. Let's try to focus on those reflexes next time!`;
+        }
+        
+        messageTextEl.innerHTML = message;
+        setTaylorDialogue(taylorComment);
+        messageBoxEl.style.display = 'flex';
+    }
+
+    // Game Setup and Start (Global Function)
+    function startGame() {
+        // Reset state
+        currentTrust = 50;
+        score = 0;
+        currentNeed = null;
+        isGameRunning = true;
+        
+        clearTimeout(needTimeout);
+        clearTimeout(gameInterval);
+        
+        messageBoxEl.style.display = 'none';
+        
+        // Initial UI update
+        updateTrustUI();
+        babyFaceEl.textContent = "👋";
+        babyStatusEl.textContent = "Game started! Wait for the first cry to communicate a need...";
+
+        // Schedule the first need
+        scheduleNextNeed();
+    }
+
+
+    // Event Listeners
+    actionButtons.addEventListener('click', handleAction);
+    restartButtonEl.addEventListener('click', startGame);
+
+    // Initialize everything on load
+    window.onload = function() {
+        initAudio();
+        // Ms. Taylor's introduction
+        setTaylorDialogue(`Hello! I'm ${MS_TAYLOR_NAME}, and I'll be your child development instructor. Your goal is to reach a score of ${MAX_SCORE_TARGET} by consistently responding to this newborn's cries! Each cry is linked to a **reflex** (Sucking, Touch, or Motor). Respond correctly and quickly to build **TRUST** (Erikson's Stage 1). Inconsistent care builds mistrust. Good luck!`);
+        messageBoxEl.style.display = 'flex';
+    };
+
+</script>
+</body>
+</html>
